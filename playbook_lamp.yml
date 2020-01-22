@@ -1,0 +1,78 @@
+-
+        name: 'Install packages'
+        hosts: target1
+        become: yes
+        tasks:
+                -
+                        yum:
+                                name: "{{ packages }}"
+                                state: latest
+                        vars:
+                                packages:
+                                        - 'httpd'
+                                        - 'httpd-tools'
+                                        - 'mariadb-server'
+                                        - 'mariadb'
+                                        - 'php'
+                                        - 'php-fpm'
+                                        - 'php-mysqlnd'
+                                        - 'php-opcache'
+                                        - 'php-gd'
+                                        - 'php-xml'
+                                        - 'php-mbstring'
+                                        - 'python2-PyMySQL'
+                                        - 'python3-PyMySQL'
+                -
+                        systemd:
+                                name: "{{ item }}"
+                                state: started
+                                enabled: yes
+                        with_items:
+                                - httpd
+                                - mariadb
+                                - php-fpm
+                -
+                        seboolean:
+                                name: httpd_can_network_connect
+                                state: yes
+                                persistent: yes
+                -
+                        seboolean:
+                                name: httpd_execmem
+                                state: yes
+                                persistent: yes
+                -
+                        firewalld:
+                                service: http 
+                                permanent: yes
+                                state: enabled
+                                zone: public
+                -
+                        lineinfile:
+                                path: '/var/www/html/info.php'
+                                create: yes
+                                line: '<?php phpinfo(); ?>'
+                                owner: 'apache'
+                                group: 'apache'
+                -
+                        file:
+                                path: '/var/www/html'
+                                state: directory
+                                recurse: yes
+                                owner: 'apache'
+                                group: 'apache'
+                -
+                        mysql_user: 
+                                name: 'root'
+                                password: 'P@$$w0rd12'
+                                host: 'localhost'
+                -
+                        systemd:
+                                name: "{{ item }}"
+                                state: restarted
+                        with_items:
+                                - httpd
+                                - mariadb
+                                - php-fpm
+
+
